@@ -17,3 +17,8 @@ export interface ChatRequest {
   message: string;
   conversation_id?: string;
 }
+
+export interface ModeResponse {
+  mode: "demo" | "live";
+  model: string | null;
+}

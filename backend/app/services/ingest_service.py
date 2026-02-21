@@ -6,14 +6,13 @@ from io import BytesIO
 from typing import Optional
 
 import tiktoken
-from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.chunk import Chunk
 from app.models.document import Document
+from app.services import embedding_service
 
-openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 tokenizer = tiktoken.get_encoding("cl100k_base")
 
 
@@ -226,19 +225,7 @@ def chunk_text(raw_chunks: list[RawChunk]) -> list[ProcessedChunk]:
 
 
 async def generate_embeddings(texts: list[str]) -> list[list[float]]:
-    all_embeddings: list[list[float]] = []
-    batch_size = 100
-
-    for i in range(0, len(texts), batch_size):
-        batch = texts[i : i + batch_size]
-        response = await openai_client.embeddings.create(
-            model=settings.EMBEDDING_MODEL,
-            input=batch,
-        )
-        batch_embeddings = [item.embedding for item in response.data]
-        all_embeddings.extend(batch_embeddings)
-
-    return all_embeddings
+    return await embedding_service.get_embeddings_batch(texts)
 
 
 async def ingest_document(

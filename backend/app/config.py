@@ -6,7 +6,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/documind"
     NEXTAUTH_SECRET: str = "change-me"
-    OPENAI_API_KEY: str = ""
+    OPENAI_API_KEY: str | None = None
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
     EMBEDDING_MODEL: str = "text-embedding-3-small"
     EMBEDDING_DIMENSIONS: int = 1536

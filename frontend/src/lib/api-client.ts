@@ -76,6 +76,14 @@ export const apiClient = {
     return res.json();
   },
 
+  async getMode(): Promise<{ mode: "demo" | "live"; model: string | null }> {
+    const res = await fetch(`${API_BASE}/api/mode`);
+    if (!res.ok) {
+      return { mode: "demo", model: null };
+    }
+    return res.json();
+  },
+
   getApiBase() {
     return API_BASE;
   },
