@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useConversation } from "@/hooks/use-conversations";
 import { useChat } from "@/hooks/use-chat";
 import { MessageBubble } from "./message-bubble";
 import { ChatInput } from "./chat-input";
 import { ThinkingIndicator } from "./thinking-indicator";
+import { apiClient } from "@/lib/api-client";
 import type { Message } from "@/types/conversation";
+import type { ModeResponse } from "@/types/chat";
 
 interface ChatInterfaceProps {
   conversationId?: string;
@@ -26,6 +28,12 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
   } = useChat(conversationId);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [mode, setMode] = useState<ModeResponse | null>(null);
+
+  // Fetch mode on mount
+  useEffect(() => {
+    apiClient.getMode().then(setMode).catch(() => {});
+  }, []);
 
   // Sync conversation messages on load
   useEffect(() => {
@@ -70,6 +78,16 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
         ))}
         {isSearching && <ThinkingIndicator />}
       </div>
+
+      {mode && (
+        <div className="text-center py-1">
+          <span className="text-xs text-slate-400">
+            {mode.mode === "demo"
+              ? "\uD83D\uDD27 Demo Mode"
+              : `\u26A1 Live Mode \u2014 Powered by ${mode.model}`}
+          </span>
+        </div>
+      )}
 
       <ChatInput
         onSend={sendMessage}

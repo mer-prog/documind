@@ -2,13 +2,11 @@ import asyncio
 import uuid
 from dataclasses import dataclass
 
-from openai import AsyncOpenAI
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-
-openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+from app.services import embedding_service
 
 
 @dataclass
@@ -136,11 +134,7 @@ async def hybrid_search(
     top_k: int = 10,
 ) -> list[SearchResult]:
     # Generate query embedding
-    response = await openai_client.embeddings.create(
-        model=settings.EMBEDDING_MODEL,
-        input=query,
-    )
-    query_embedding = response.data[0].embedding
+    query_embedding = await embedding_service.get_embedding(query)
 
     # Run both searches concurrently
     vector_results, keyword_results = await asyncio.gather(

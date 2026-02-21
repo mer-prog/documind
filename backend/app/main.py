@@ -24,3 +24,12 @@ app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"]
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+
+@app.get("/api/mode")
+async def get_mode():
+    is_live = bool(settings.OPENAI_API_KEY)
+    return {
+        "mode": "live" if is_live else "demo",
+        "model": settings.CHAT_MODEL if is_live else None,
+    }

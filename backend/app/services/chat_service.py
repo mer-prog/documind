@@ -1,10 +1,10 @@
+import asyncio
 import json
 import time
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import date, datetime
 
-from openai import AsyncOpenAI
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +15,12 @@ from app.models.message import Message
 from app.schemas.chat import ChatChunkEvent, SourceCitation
 from app.services import search_service, security_service
 
-openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+
+def _get_openai_client():
+    """Lazy-initialise the OpenAI async client (import only when needed)."""
+    from openai import AsyncOpenAI
+
+    return AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 async def get_conversation_context(
@@ -53,6 +58,10 @@ async def get_conversation_context(
 async def summarize_older_messages(
     db: AsyncSession, conversation_id: uuid.UUID
 ) -> None:
+    # Skip summarization in demo mode (no API key)
+    if not settings.OPENAI_API_KEY:
+        return
+
     # Get message count
     count_result = await db.execute(
         select(func.count(Message.id)).where(
@@ -83,7 +92,8 @@ async def summarize_older_messages(
     text_to_summarize = "\n".join(text_parts)
 
     # Summarize with GPT
-    response = await openai_client.chat.completions.create(
+    client = _get_openai_client()
+    response = await client.chat.completions.create(
         model=settings.CHAT_MODEL,
         messages=[
             {
@@ -105,6 +115,35 @@ async def summarize_older_messages(
     if conversation:
         conversation.summary = summary
         await db.flush()
+
+
+def _build_mock_response(search_results, sanitized_message: str) -> str:
+    """Build a template-based response from search results for demo mode."""
+    if not search_results:
+        return (
+            "I couldn't find any relevant information in the documents to answer "
+            "your question. Please try rephrasing or ask about a different topic."
+        )
+
+    parts = [
+        "Based on the documents, here is what I found:\n"
+    ]
+
+    for r in search_results[:3]:
+        page_info = f", Page {r.page_number}" if r.page_number else ""
+        heading_info = f" ({r.heading})" if r.heading else ""
+        parts.append(
+            f"**[Source: {r.document_name}{page_info}]{heading_info}**\n"
+            f"{r.text_snippet}\n"
+        )
+
+    parts.append(
+        "---\n"
+        "Note: This response was generated in demo mode using document search results. "
+        "Connect an OpenAI API key for AI-powered answers."
+    )
+
+    return "\n".join(parts)
 
 
 async def stream_chat_response(
@@ -190,7 +229,13 @@ async def stream_chat_response(
         )
     context_text = "\n---\n".join(context_parts)
 
-    system_prompt = f"""You are DocuMind, an AI assistant that answers questions based on the provided documents.
+    full_response = ""
+    prompt_tokens = 0
+    completion_tokens = 0
+
+    if settings.OPENAI_API_KEY:
+        # ── Live Mode: stream from OpenAI ──
+        system_prompt = f"""You are DocuMind, an AI assistant that answers questions based on the provided documents.
 Use ONLY the following context to answer. If the answer is not in the context, say so.
 Always cite your sources using [Source: document_name, Page X] format.
 
@@ -199,42 +244,49 @@ Context:
 {context_text}
 ---"""
 
-    # Get conversation history
-    conversation_context = await get_conversation_context(db, conversation.id)
+        # Get conversation history
+        conversation_context = await get_conversation_context(db, conversation.id)
 
-    # Build messages for OpenAI
-    messages = [{"role": "system", "content": system_prompt}]
-    messages.extend(conversation_context)
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(conversation_context)
 
-    # Stream from OpenAI
-    full_response = ""
-    prompt_tokens = 0
-    completion_tokens = 0
+        try:
+            client = _get_openai_client()
+            stream = await client.chat.completions.create(
+                model=settings.CHAT_MODEL,
+                messages=messages,
+                stream=True,
+                max_tokens=2000,
+                stream_options={"include_usage": True},
+            )
 
-    try:
-        stream = await openai_client.chat.completions.create(
-            model=settings.CHAT_MODEL,
-            messages=messages,
-            stream=True,
-            max_tokens=2000,
-            stream_options={"include_usage": True},
-        )
+            async for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    token = chunk.choices[0].delta.content
+                    full_response += token
+                    event = ChatChunkEvent(type="token", content=token)
+                    yield f"data: {event.model_dump_json()}\n\n"
 
-        async for chunk in stream:
-            if chunk.choices and chunk.choices[0].delta.content:
-                token = chunk.choices[0].delta.content
-                full_response += token
-                event = ChatChunkEvent(type="token", content=token)
-                yield f"data: {event.model_dump_json()}\n\n"
+                if chunk.usage:
+                    prompt_tokens = chunk.usage.prompt_tokens
+                    completion_tokens = chunk.usage.completion_tokens
 
-            if chunk.usage:
-                prompt_tokens = chunk.usage.prompt_tokens
-                completion_tokens = chunk.usage.completion_tokens
+        except Exception as e:
+            event = ChatChunkEvent(type="error", content=str(e))
+            yield f"data: {event.model_dump_json()}\n\n"
+            return
+    else:
+        # ── Demo Mode: template response with pseudo-SSE streaming ──
+        full_response = _build_mock_response(search_results, sanitized_message)
+        words = full_response.split()
 
-    except Exception as e:
-        event = ChatChunkEvent(type="error", content=str(e))
-        yield f"data: {event.model_dump_json()}\n\n"
-        return
+        for word in words:
+            token = word + " "
+            event = ChatChunkEvent(type="token", content=token)
+            yield f"data: {event.model_dump_json()}\n\n"
+            await asyncio.sleep(0.035)
+
+        completion_tokens = len(words)
 
     # Done event
     event = ChatChunkEvent(type="done")
