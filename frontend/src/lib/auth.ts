@@ -49,8 +49,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id as string;
         token.email = user.email as string;
         token.name = user.name as string;
-        token.workspaceId = (user as Record<string, unknown>).workspaceId as string;
-        token.role = (user as Record<string, unknown>).role as string;
+        token.workspaceId = (user as unknown as Record<string, unknown>).workspaceId as string;
+        token.role = (user as unknown as Record<string, unknown>).role as string;
       }
       return token;
     },
