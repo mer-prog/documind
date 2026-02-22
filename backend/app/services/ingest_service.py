@@ -278,6 +278,7 @@ async def ingest_document(
                 Chunk(
                     id=uuid.uuid4(),
                     document_id=document_id,
+                    workspace_id=document.workspace_id,
                     content=pc.content,
                     token_count=pc.token_count,
                     page_number=pc.page_number,
