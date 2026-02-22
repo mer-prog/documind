@@ -1,8 +1,8 @@
+import datetime
 import uuid
-from datetime import date
 from typing import Optional
 
-from sqlalchemy import JSON, ForeignKey, UniqueConstraint
+from sqlalchemy import JSON, Date, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -15,7 +15,7 @@ class DailyAnalytics(Base):
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id"), nullable=False
     )
-    date: Mapped[date] = mapped_column(index=True)
+    date: Mapped[datetime.date] = mapped_column(Date, index=True)
     total_queries: Mapped[int] = mapped_column(default=0)
     total_tokens_prompt: Mapped[int] = mapped_column(default=0)
     total_tokens_completion: Mapped[int] = mapped_column(default=0)
