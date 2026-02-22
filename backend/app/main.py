@@ -120,6 +120,7 @@ async def seed_database(db: AsyncSession = Depends(get_db)):
             chunk = Chunk(
                 id=chunk_id,
                 document_id=doc_id,
+                workspace_id=workspace_id,
                 content=pc.content,
                 token_count=pc.token_count,
                 page_number=pc.page_number,

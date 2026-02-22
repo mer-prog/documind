@@ -18,6 +18,9 @@ class Chunk(Base):
     document_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("documents.id", ondelete="CASCADE"), index=True
     )
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id"), nullable=False
+    )
     content: Mapped[str] = mapped_column(Text)
     token_count: Mapped[int] = mapped_column(default=0)
     page_number: Mapped[Optional[int]] = mapped_column(nullable=True)
