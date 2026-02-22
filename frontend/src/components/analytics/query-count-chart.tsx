@@ -22,7 +22,7 @@ export function QueryCountChart({ data }: QueryCountChartProps) {
       month: "short",
       day: "numeric",
     }),
-    queries: d.total_queries,
+    queries: d.queries,
   }));
 
   return (
