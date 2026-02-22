@@ -22,7 +22,7 @@ export function LatencyChart({ data }: LatencyChartProps) {
       month: "short",
       day: "numeric",
     }),
-    latency: Math.round(d.average_latency_ms),
+    latency: Math.round(d.avg_latency_ms),
   }));
 
   return (
