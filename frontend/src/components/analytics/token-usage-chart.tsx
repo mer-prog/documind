@@ -23,8 +23,8 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
       month: "short",
       day: "numeric",
     }),
-    prompt: d.total_tokens_prompt,
-    completion: d.total_tokens_completion,
+    prompt: d.tokens_prompt,
+    completion: d.tokens_completion,
   }));
 
   return (
