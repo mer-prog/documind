@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { SignJWT } from "jose";
 import { authConfig } from "./auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -51,6 +52,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.name = user.name as string;
         token.workspaceId = (user as unknown as Record<string, unknown>).workspaceId as string;
         token.role = (user as unknown as Record<string, unknown>).role as string;
+
+        const secret = new TextEncoder().encode(
+          process.env.NEXTAUTH_SECRET || "change-me"
+        );
+        const accessToken: string = await new SignJWT({
+          sub: token.id,
+          email: token.email,
+          name: token.name,
+          workspace_id: token.workspaceId,
+        })
+          .setProtectedHeader({ alg: "HS256" })
+          .setIssuedAt()
+          .setExpirationTime("24h")
+          .sign(secret);
+        token.accessToken = accessToken;
       }
       return token;
     },
@@ -58,6 +74,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.id = token.id as string;
       session.user.workspaceId = token.workspaceId as string;
       session.user.role = token.role as string;
+      session.accessToken = token.accessToken as string;
       return session;
     },
   },
