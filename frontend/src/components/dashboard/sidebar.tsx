@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { clearTokenCache } from "@/lib/api-client";
 import {
   BarChart3,
   FileText,
@@ -82,7 +83,10 @@ export function Sidebar() {
           variant="ghost"
           size="sm"
           className="w-full justify-start text-muted-foreground"
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => {
+            clearTokenCache();
+            signOut({ callbackUrl: "/login" });
+          }}
         >
           <LogOut className="h-4 w-4 mr-2" />
           Sign Out
