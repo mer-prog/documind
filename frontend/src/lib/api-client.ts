@@ -1,23 +1,50 @@
-import { getSession } from "next-auth/react";
-
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+// Client-side token cache to avoid redundant /api/auth/token calls
+let _cachedToken: string | null = null;
+let _tokenExpiry = 0;
+
+async function fetchBackendToken(): Promise<string | null> {
+  // Return cached token if still valid (50-min cache for 1-hour token)
+  if (_cachedToken && Date.now() < _tokenExpiry) {
+    return _cachedToken;
+  }
+  try {
+    const res = await fetch("/api/auth/token");
+    if (!res.ok) {
+      _cachedToken = null;
+      return null;
+    }
+    const data = await res.json();
+    _cachedToken = data.token || null;
+    if (_cachedToken) {
+      _tokenExpiry = Date.now() + 50 * 60 * 1000; // 50 minutes
+    }
+    return _cachedToken;
+  } catch {
+    _cachedToken = null;
+    return null;
+  }
+}
+
 async function getAuthHeaders(): Promise<HeadersInit> {
-  const session = await getSession();
+  const token = await fetchBackendToken();
   const headers: HeadersInit = {
     "Content-Type": "application/json",
   };
-
-  if (session?.accessToken) {
-    headers["Authorization"] = `Bearer ${session.accessToken}`;
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
-
   return headers;
 }
 
 async function getAuthToken(): Promise<string | null> {
-  const session = await getSession();
-  return (session?.accessToken as string) || null;
+  return fetchBackendToken();
+}
+
+export function clearTokenCache() {
+  _cachedToken = null;
+  _tokenExpiry = 0;
 }
 
 export const apiClient = {
