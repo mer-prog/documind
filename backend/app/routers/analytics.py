@@ -25,6 +25,7 @@ async def get_usage(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    days = max(1, min(days, 365))
     start_date = date.today() - timedelta(days=days)
 
     result = await db.execute(
@@ -68,6 +69,8 @@ async def get_top_queries(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    days = max(1, min(days, 365))
+    limit = max(1, min(limit, 100))
     start_date = date.today() - timedelta(days=days)
 
     result = await db.execute(

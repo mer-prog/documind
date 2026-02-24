@@ -53,9 +53,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.workspaceId = (user as unknown as Record<string, unknown>).workspaceId as string;
         token.role = (user as unknown as Record<string, unknown>).role as string;
 
-        const secret = new TextEncoder().encode(
-          process.env.NEXTAUTH_SECRET || "change-me"
-        );
+        const nextAuthSecret = process.env.NEXTAUTH_SECRET;
+        if (!nextAuthSecret) {
+          throw new Error("NEXTAUTH_SECRET environment variable is not set");
+        }
+        const secret = new TextEncoder().encode(nextAuthSecret);
         const accessToken: string = await new SignJWT({
           sub: token.id,
           email: token.email,

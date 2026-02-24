@@ -271,8 +271,8 @@ Context:
                     prompt_tokens = chunk.usage.prompt_tokens
                     completion_tokens = chunk.usage.completion_tokens
 
-        except Exception as e:
-            event = ChatChunkEvent(type="error", content=str(e))
+        except Exception:
+            event = ChatChunkEvent(type="error", content="An error occurred while generating the response. Please try again.")
             yield f"data: {event.model_dump_json()}\n\n"
             return
     else:

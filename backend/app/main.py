@@ -1,27 +1,35 @@
+import os
 import uuid
 from pathlib import Path
 
-import bcrypt
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
+from app.dependencies import get_current_user
 from app.models import Chunk, Conversation, Document, Message, User, Workspace
 from app.routers import analytics, auth, chat, conversations, documents
 from app.services import embedding_service
 from app.services.ingest_service import chunk_text, parse_markdown
 
-app = FastAPI(title="DocuMind API", version="1.0.0")
+_enable_docs = os.environ.get("ENABLE_API_DOCS", "false").lower() == "true"
+app = FastAPI(
+    title="DocuMind API",
+    version="1.0.0",
+    docs_url="/docs" if _enable_docs else None,
+    redoc_url="/redoc" if _enable_docs else None,
+    openapi_url="/openapi.json" if _enable_docs else None,
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
@@ -48,33 +56,20 @@ async def get_mode():
 
 
 @app.post("/api/seed")
-async def seed_database(db: AsyncSession = Depends(get_db)):
+async def seed_database(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
     # Check if already seeded
-    result = await db.execute(select(User).limit(1))
+    result = await db.execute(select(Document).limit(1))
     if result.scalars().first() is not None:
         return {"status": "already seeded"}
 
-    # Create workspace
-    workspace_id = uuid.uuid4()
-    workspace = Workspace(id=workspace_id, name="Acme Corp Knowledge Base")
-    db.add(workspace)
-    await db.flush()
-
-    # Create demo admin user
-    hashed_pw = bcrypt.hashpw(
-        b"demo1234", bcrypt.gensalt()
-    ).decode("utf-8")
-    user_id = uuid.uuid4()
-    user = User(
-        id=user_id,
-        email="admin@documind.dev",
-        hashed_password=hashed_pw,
-        name="Admin User",
-        role="admin",
-        workspace_id=workspace_id,
-    )
-    db.add(user)
-    await db.flush()
+    workspace_id = current_user.workspace_id
+    user_id = current_user.id
 
     # Seed documents from seed/data/ directory
     seed_filenames = [

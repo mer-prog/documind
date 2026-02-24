@@ -9,9 +9,11 @@ export async function GET() {
     return NextResponse.json({ token: null }, { status: 401 });
   }
 
-  const secret = new TextEncoder().encode(
-    process.env.NEXTAUTH_SECRET || "change-me"
-  );
+  const nextAuthSecret = process.env.NEXTAUTH_SECRET;
+  if (!nextAuthSecret) {
+    return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+  }
+  const secret = new TextEncoder().encode(nextAuthSecret);
 
   const token = await new SignJWT({
     sub: session.user.id,
