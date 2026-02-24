@@ -1,178 +1,83 @@
-# DocuMind — AI ドキュメントインテリジェンス プラットフォーム
+<div align="center">
 
-> ドキュメントをアップロード。質問を投げる。引用付きの回答を即座に取得。
+# DocuMind
 
-**DocuMind** は、組織の内部ナレッジベースを会話型インターフェースに変換するフルスタック AI ドキュメントインテリジェンスプラットフォームです。Markdown、PDF、DOCX ファイルをアップロードすると、セマンティックチャンク分割・ベクトル埋め込み・インデックス作成を自動実行し、自然言語チャットによる即時検索を可能にします。
+**AI-Powered Document Intelligence Platform**
 
-🔗 **ライブデモ:** [documind-pi.vercel.app](https://documind-pi.vercel.app)
-📧 **デモ認証情報:** `admin@documind.dev` / `demo1234`
+Upload documents. Ask questions. Get cited answers instantly.
 
----
+[![Live Demo](https://img.shields.io/badge/Live_Demo-documind--pi.vercel.app-000?style=for-the-badge&logo=vercel)](https://documind-pi.vercel.app)
 
-## アーキテクチャ概要
+[![Next.js](https://img.shields.io/badge/Next.js-15-000?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=000)](https://react.dev/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=fff)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL_17-pgvector-4169E1?logo=postgresql&logoColor=fff)](https://www.postgresql.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=fff)](https://www.typescriptlang.org/)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=fff)](https://www.python.org/)
 
-```
-┌─────────────────────────────────────────────────────┐
-│                  フロントエンド (Vercel)               │
-│         Next.js 15 · React 19 · TypeScript          │
-│      NextAuth.js · TanStack Query · Tailwind CSS    │
-└────────────────────────┬────────────────────────────┘
-                         │ REST + SSE
-┌────────────────────────▼────────────────────────────┐
-│                  バックエンド (Render)                 │
-│           Python · FastAPI · SQLAlchemy              │
-│        ハイブリッド検索エンジン · SSE ストリーミング       │
-└────────────────────────┬────────────────────────────┘
-                         │ asyncpg + SSL
-┌────────────────────────▼────────────────────────────┐
-│                データベース (Neon)                     │
-│     PostgreSQL 17 · pgvector · pg_trgm              │
-│        ベクトル埋め込み · 全文検索                      │
-└─────────────────────────────────────────────────────┘
-```
+</div>
 
 ---
 
-## 主要機能
+DocuMind is a full-stack AI document intelligence platform that transforms organizational knowledge bases into a conversational interface. Upload Markdown, PDF, or DOCX files — the system automatically performs semantic chunking, vector embedding, and indexing, enabling instant natural-language search with source-cited answers.
 
-### 🔍 ハイブリッド検索 (pgvector + pg_trgm + RRF)
+> **Demo credentials:** `admin@documind.dev` / `demo1234`
 
-DocuMind はベクトル検索だけに頼りません。**セマンティック検索**（pgvector によるコサイン類似度）と**キーワード検索**（pg_trgm によるトライグラムマッチング）を **Reciprocal Rank Fusion (k=60)** で統合し、高精度な検索結果を実現します。単一モダリティの検索を大幅に上回る性能を発揮します。
+---
 
-### 💬 ソース引用付き会話型 RAG
+## Why This Project Stands Out
 
-すべての回答に、元のドキュメントチャンクを指すインラインソース引用が含まれます。会話メモリ（直近5メッセージ＋要約）を保持し、文脈を踏まえたフォローアップ質問に対応します。
+Most portfolio RAG apps rely on a single retrieval method and wrap an OpenAI call. DocuMind goes further:
 
-### 📡 リアルタイム SSE ストリーミング
-
-チャット応答は Server-Sent Events でトークンごとにストリーミング配信され、ChatGPT ライクなレスポンシブ UX を提供します。ライブモード（OpenAI GPT-4o-mini）とデモモード（テンプレートベース）の両方で同一の SSE プロトコルを使用します。
-
-### 📊 アナリティクスダッシュボード
-
-トークン消費量、クエリレイテンシ、検索品質メトリクス、利用パターンを追跡するオブザーバビリティダッシュボードを内蔵。プロダクションレベルの運用設計を体現しています。
-
-### 🔒 マルチテナント ワークスペースアーキテクチャ
-
-ロールベースアクセス制御（admin/member）によるワークスペース完全分離で、組織間のデータセパレーションを保証します。
-
-### 🔄 デュアルモードアーキテクチャ（デモ / ライブ）
-
-| | デモモード | ライブモード |
+| | What DocuMind Does | Why It Matters |
 |---|---|---|
-| **埋め込み** | ハッシュベース疑似ベクトル（決定的・無料） | OpenAI `text-embedding-3-small` |
-| **チャット** | 検索結果ベースのテンプレート応答 + 35ms 疑似SSE | GPT-4o-mini ストリーミング |
-| **検索** | ✅ 実ハイブリッド検索（pgvector + pg_trgm） | ✅ 同一 |
-| **コスト** | $0 | 従量課金（OpenAI API） |
-| **有効化** | デフォルト（APIキー不要） | `OPENAI_API_KEY` 環境変数を設定 |
-
-> デモモードはモックではありません — ハイブリッド検索エンジンは事前計算済み埋め込みに対して実際のコサイン類似度計算とトライグラムマッチングを実行します。
+| **Hybrid Search** | Combines pgvector cosine similarity + pg_trgm trigram matching via Reciprocal Rank Fusion (k=60) | Handles both semantic queries *and* exact keyword matches — the way production RAG systems actually work |
+| **Dual-Mode Architecture** | Runs a real search engine with hash-based deterministic embeddings at $0 cost; swap in OpenAI with one env var | Proves production-grade code without burning API credits for portfolio demos |
+| **Async Concurrent Search** | Vector and keyword searches execute in parallel via `asyncio.gather()` | Demonstrates real performance engineering, not just "it works" |
+| **Multi-Tenant Isolation** | Workspace-scoped data with RBAC (admin/member) across all tables | Shows enterprise architecture patterns, not toy single-user apps |
+| **SSE Streaming** | Token-by-token Server-Sent Events for ChatGPT-like UX | Real-time streaming protocol, not polling or batch responses |
 
 ---
 
-## 技術スタック
-
-### バックエンド
-
-| 技術 | 用途 |
-|---|---|
-| **Python 3.12** | バックエンド言語 |
-| **FastAPI** | 非同期 REST API フレームワーク |
-| **SQLAlchemy 2.0** | 型安全な非同期 ORM |
-| **Alembic** | データベースマイグレーション管理 |
-| **pgvector** | ベクトル類似度検索（コサイン距離） |
-| **pg_trgm** | トライグラムベースのキーワード検索 |
-| **asyncpg** | 高性能非同期 PostgreSQL ドライバ |
-| **bcrypt** | パスワードハッシュ化 |
-| **tiktoken** | OpenAI モデル用トークンカウント |
-
-### フロントエンド
-
-| 技術 | 用途 |
-|---|---|
-| **Next.js 15** | App Router 搭載 React フレームワーク |
-| **React 19** | UI ライブラリ |
-| **TypeScript** | 型安全な開発 |
-| **NextAuth.js** | 認証（Credentials Provider） |
-| **TanStack Query** | サーバーステート管理 & キャッシュ |
-| **Tailwind CSS** | ユーティリティファーストスタイリング |
-| **shadcn/ui** | アクセシブルコンポーネントライブラリ |
-| **Recharts** | アナリティクスデータ可視化 |
-
-### インフラストラクチャ
-
-| サービス | 用途 |
-|---|---|
-| **Vercel** | フロントエンドホスティング（Edge Network） |
-| **Render** | バックエンドホスティング（Python ランタイム） |
-| **Neon** | サーバーレス PostgreSQL（pgvector 対応） |
-
----
-
-## プロジェクト構成
+## Architecture
 
 ```
-documind/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI アプリ + シードエンドポイント
-│   │   ├── config.py            # Pydantic 設定管理
-│   │   ├── database.py          # 非同期 SQLAlchemy エンジン
-│   │   ├── models/              # SQLAlchemy ORM モデル
-│   │   │   ├── user.py
-│   │   │   ├── workspace.py
-│   │   │   ├── document.py
-│   │   │   ├── chunk.py
-│   │   │   ├── conversation.py
-│   │   │   └── usage_log.py
-│   │   ├── routers/             # API ルートハンドラ
-│   │   │   ├── auth.py
-│   │   │   ├── documents.py
-│   │   │   ├── chat.py
-│   │   │   ├── search.py
-│   │   │   └── analytics.py
-│   │   └── services/            # ビジネスロジック層
-│   │       ├── embedding_service.py   # デュアルモード埋め込み
-│   │       ├── ingest_service.py      # ドキュメント解析 + チャンク分割
-│   │       ├── search_service.py      # ハイブリッド検索 (RRF)
-│   │       └── chat_service.py        # RAG + SSE ストリーミング
-│   ├── seed/
-│   │   ├── seed.py              # データベースシーダー
-│   │   └── data/                # サンプルドキュメント (Markdown)
-│   ├── requirements.txt
-│   └── main.py                  # Uvicorn エントリーポイント
-│
-├── frontend/
-│   ├── src/
-│   │   ├── app/                 # Next.js App Router ページ
-│   │   ├── components/
-│   │   │   ├── chat/            # チャットインターフェース
-│   │   │   ├── documents/       # ドキュメント管理 UI
-│   │   │   ├── analytics/       # ダッシュボードチャート
-│   │   │   └── ui/              # shadcn/ui コンポーネント
-│   │   ├── lib/
-│   │   │   ├── api-client.ts    # バックエンド API 統合
-│   │   │   └── auth.ts          # NextAuth 設定
-│   │   └── types/               # TypeScript 型定義
-│   ├── tailwind.config.ts
-│   └── next.config.ts
-│
-└── .gitignore
+┌─────────────────────────────────────────────────────────┐
+│                    Frontend (Vercel)                     │
+│           Next.js 15 · React 19 · TypeScript            │
+│        NextAuth.js · TanStack Query · Tailwind CSS      │
+└──────────────────────────┬──────────────────────────────┘
+                           │ REST + SSE
+┌──────────────────────────▼──────────────────────────────┐
+│                   Backend (Render)                       │
+│             Python · FastAPI · SQLAlchemy                │
+│       Hybrid Search Engine · SSE Streaming · RAG        │
+└──────────────────────────┬──────────────────────────────┘
+                           │ asyncpg + SSL
+┌──────────────────────────▼──────────────────────────────┐
+│                   Database (Neon)                        │
+│        PostgreSQL 17 · pgvector · pg_trgm               │
+│      Vector Embeddings · Full-Text Search · HNSW        │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ハイブリッド検索の仕組み
+## Features
+
+### Hybrid Search Engine (pgvector + pg_trgm + RRF)
+
+DocuMind doesn't rely on vector search alone. It fuses **semantic search** (pgvector cosine similarity) with **keyword search** (pg_trgm trigram matching) using **Reciprocal Rank Fusion (k=60)**.
 
 ```
-ユーザークエリ: "リモートワークのポリシーは？"
+User Query: "What is the remote work policy?"
                     │
         ┌───────────┴───────────┐
         ▼                       ▼
-  セマンティック検索         キーワード検索
-  (pgvector コサイン類似度)  (pg_trgm トライグラム)
-        │                       │
-  ベクトル類似度で          トライグラムマッチ
-  ランキング               スコアでランキング
+  Semantic Search          Keyword Search
+  pgvector cosine          pg_trgm trigram
+  similarity               similarity > 0.05
+  (top 20)                 (top 20)
         │                       │
         └───────────┬───────────┘
                     ▼
@@ -181,26 +86,97 @@ documind/
                   k = 60
                     │
                     ▼
-          Top-N 統合結果
-          ソースメタデータ付き
+            Top-N fused results
+         with source metadata
 ```
 
-このアプローチにより：
-- **セマンティッククエリ**（「休暇の考え方について説明して」）→ 埋め込み類似度を活用
-- **完全一致クエリ**（「PTO ポリシー セクション 4.2」）→ トライグラムキーワードマッチングを活用
-- **混合クエリ** → RRF スコア統合で両方の長所を取得
+This approach ensures:
+- **Semantic queries** ("tell me about vacation philosophy") leverage embedding similarity
+- **Exact-match queries** ("PTO policy section 4.2") leverage trigram keyword matching
+- **Mixed queries** get the best of both via rank-based fusion
+
+### Conversational RAG with Source Citations
+
+Every response includes inline source citations pointing to the original document chunks. The system maintains conversation memory (last 5 messages + automatic summarization of older context) for coherent follow-up questions.
+
+### Real-Time SSE Streaming
+
+Chat responses stream token-by-token via Server-Sent Events, delivering a ChatGPT-like responsive experience. Both live mode (OpenAI GPT-4o-mini) and demo mode (template-based) use the identical SSE protocol.
+
+### Analytics Dashboard
+
+Built-in observability dashboard tracking token consumption, query latency, search quality metrics, and usage patterns — demonstrating production-level operational design.
+
+### Multi-Tenant Workspace Architecture
+
+Complete data isolation by workspace with role-based access control (admin/member), ensuring organizational data separation across all tables and queries.
+
+### Dual-Mode Architecture
+
+| | Demo Mode | Live Mode |
+|---|---|---|
+| **Embeddings** | SHA-256 hash-based deterministic vectors (free) | OpenAI `text-embedding-3-small` |
+| **Chat** | Template responses from search results + 35ms pseudo-SSE | GPT-4o-mini streaming |
+| **Search** | Real hybrid search (pgvector + pg_trgm) | Identical |
+| **Cost** | $0 | Pay-per-token (OpenAI API) |
+| **Activate** | Default (no API key required) | Set `OPENAI_API_KEY` env var |
+
+> Demo mode is not a mock — the hybrid search engine performs real cosine similarity and trigram matching against pre-computed embeddings.
 
 ---
 
-## セットアップ手順
+## Tech Stack
 
-### 前提条件
+### Backend
+
+| Technology | Purpose |
+|---|---|
+| **Python 3.12** | Core language |
+| **FastAPI** | Async REST API framework |
+| **SQLAlchemy 2.0** | Type-safe async ORM |
+| **Alembic** | Database migration management |
+| **pgvector** | Vector similarity search (cosine distance) |
+| **pg_trgm** | Trigram-based keyword search |
+| **asyncpg** | High-performance async PostgreSQL driver |
+| **PyMuPDF** | PDF document parsing |
+| **python-docx** | DOCX document parsing |
+| **tiktoken** | OpenAI-compatible token counting |
+| **bcrypt** | Password hashing |
+| **python-jose** | JWT token management |
+
+### Frontend
+
+| Technology | Purpose |
+|---|---|
+| **Next.js 15** | React framework with App Router |
+| **React 19** | UI library |
+| **TypeScript 5.7** | Type-safe development |
+| **NextAuth.js v5** | Authentication (Credentials Provider) |
+| **TanStack Query 5** | Server state management & caching |
+| **Tailwind CSS** | Utility-first styling |
+| **shadcn/ui + Radix UI** | Accessible component library |
+| **Recharts** | Analytics data visualization |
+| **Zod** | Runtime schema validation |
+
+### Infrastructure
+
+| Service | Purpose |
+|---|---|
+| **Vercel** | Frontend hosting (Edge Network) |
+| **Render** | Backend hosting (Python runtime) |
+| **Neon** | Serverless PostgreSQL (pgvector-enabled) |
+
+---
+
+## Getting Started
+
+### Prerequisites
 
 - Python 3.12+
 - Node.js 20+
-- PostgreSQL（pgvector および pg_trgm 拡張機能が必要）
+- PostgreSQL with `pgvector` and `pg_trgm` extensions
 
-### バックエンド
+### Backend
 
 ```bash
 cd backend
@@ -211,20 +187,21 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# .env に DATABASE_URL を設定（任意で OPENAI_API_KEY も設定）
+# Set DATABASE_URL (required)
+# Set OPENAI_API_KEY (optional — omit for demo mode)
 ```
 
 ```bash
+# Seed demo workspace, users, and documents (no API key needed)
 python -m seed.seed
-# デモ用ワークスペース・ユーザー・ドキュメントを投入（APIキー不要）
 ```
 
 ```bash
 uvicorn main:app --reload
-# API: http://localhost:8000
+# API available at http://localhost:8000
 ```
 
-### フロントエンド
+### Frontend
 
 ```bash
 cd frontend
@@ -232,77 +209,155 @@ npm install
 ```
 
 ```bash
-cp .env.example .env.local
-# NEXT_PUBLIC_API_URL=http://localhost:8000 を設定
+cp .env.local.example .env.local
+# Set NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ```bash
 npm run dev
-# アプリ: http://localhost:3000
+# App available at http://localhost:3000
 ```
 
 ---
 
-## API エンドポイント
+## API Reference
 
-| メソッド | エンドポイント | 説明 |
+| Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/auth/login` | ユーザー認証 |
-| `POST` | `/api/auth/register` | ユーザー登録 |
-| `GET` | `/api/documents` | ワークスペースのドキュメント一覧 |
-| `POST` | `/api/documents/upload` | ドキュメントのアップロード & 取り込み |
-| `DELETE` | `/api/documents/:id` | ドキュメント削除 |
-| `POST` | `/api/chat` | チャットメッセージ送信（SSE ストリーム） |
-| `GET` | `/api/conversations` | 会話一覧 |
-| `POST` | `/api/search` | ハイブリッド検索クエリ |
-| `GET` | `/api/analytics/usage` | 利用統計 |
-| `GET` | `/api/mode` | 現在のモード（demo/live） |
+| `POST` | `/api/auth/login` | Authenticate user |
+| `POST` | `/api/auth/register` | Register new user |
+| `POST` | `/api/auth/verify` | Verify JWT token |
+| `GET` | `/api/documents` | List workspace documents |
+| `POST` | `/api/documents` | Upload document |
+| `DELETE` | `/api/documents/:id` | Delete document |
+| `POST` | `/api/documents/:id/ingest` | Process document (chunk + embed) |
+| `POST` | `/api/chat` | Send chat message (SSE stream) |
+| `GET` | `/api/conversations` | List conversations |
+| `GET` | `/api/conversations/:id` | Get conversation with messages |
+| `GET` | `/api/analytics/usage` | Usage statistics (configurable range) |
+| `GET` | `/api/analytics/top-queries` | Top queries ranking |
 
 ---
 
-## データベーススキーマ
+## Database Schema
 
 ```
-workspaces ──┬── users (role: admin/member)
+workspaces ──┬── users (role: admin | member)
              ├── documents ── chunks (embedding: vector(1536))
-             └── conversations ── messages (sources: jsonb)
-                                  usage_logs (tokens, latency)
+             ├── conversations ── messages (sources: jsonb)
+             └── usage_logs (tokens, latency_ms)
+                 daily_analytics (aggregated metrics)
 ```
 
-主要な設計判断：
-- **`vector(1536)`** — OpenAI 互換の埋め込みベクトルを chunks テーブルに格納
-- **GIN インデックス (pg_trgm)** — 高速トライグラムキーワード検索
-- **HNSW インデックス (pgvector)** — 近似最近傍検索
-- **JSONB sources** — messages テーブルで柔軟な引用情報を格納
+Key design choices:
+
+- **`vector(1536)`** — OpenAI-compatible embedding vectors stored directly in the chunks table
+- **GIN index (pg_trgm)** — Enables fast trigram keyword search on chunk content
+- **HNSW index (pgvector)** — Approximate nearest neighbor search for vector similarity
+- **JSONB sources** — Flexible citation metadata in messages (chunk ID, document name, page number, relevance score)
+- **SHA-256 content hash** — Deduplication at document level
 
 ---
 
-## 設計判断の根拠
+## Design Decisions
 
-| 判断 | 根拠 |
+| Decision | Rationale |
 |---|---|
-| **モノレポ構成** | 単一リポジトリでデプロイとバージョン管理を簡素化 |
-| **FastAPI + Next.js 分離** | ポリグロットアーキテクチャ（Python + TypeScript）の実践 |
-| **ハイブリッド検索** | 本番 RAG システムには完全一致のためのキーワードフォールバックが不可欠 |
-| **RRF（線形結合ではなく）** | ランクベース統合はスコア分布の差異に対してよりロバスト |
-| **デュアルモード** | $0 でポートフォリオデモを運用しつつ、本番対応コードを証明 |
-| **SSE（WebSocket ではなく）** | 単方向ストリーミングには十分なシンプルなプロトコル |
-| **セマンティックチャンク分割** | 見出し認識分割により固定サイズ分割よりもドキュメント構造を保持 |
+| **Monorepo** | Single repository simplifies deployment, versioning, and cross-stack refactoring |
+| **FastAPI + Next.js separation** | Demonstrates polyglot architecture (Python ML/backend + TypeScript frontend) |
+| **Hybrid search over vector-only** | Production RAG systems need keyword fallback for exact matches — this is table stakes |
+| **RRF over linear combination** | Rank-based fusion is robust to score distribution differences between retrieval methods |
+| **Dual-mode architecture** | Run a $0 portfolio demo while proving production-ready code paths |
+| **SSE over WebSocket** | Sufficient for unidirectional streaming; simpler protocol, fewer failure modes |
+| **Semantic chunking** | Heading-aware splitting preserves document structure better than fixed-size chunking |
+| **500-token chunks with 50-token overlap** | Balanced granularity for retrieval precision without fragmenting context |
+| **asyncio.gather for search** | Concurrent vector + keyword search eliminates sequential bottleneck |
+| **Workspace-scoped queries** | Multi-tenant isolation at the query level, not just the application level |
 
 ---
 
-## 言語構成
+## Project Structure
+
+```
+documind/
+├── backend/
+│   ├── app/
+│   │   ├── main.py                    # FastAPI app + CORS + seed endpoint
+│   │   ├── config.py                  # Pydantic settings (chunk size, RRF k, etc.)
+│   │   ├── database.py                # Async SQLAlchemy engine + session factory
+│   │   ├── dependencies.py            # Auth dependency injection
+│   │   ├── models/                    # SQLAlchemy ORM models
+│   │   │   ├── user.py                #   User with workspace FK + role
+│   │   │   ├── workspace.py           #   Multi-tenant root entity
+│   │   │   ├── document.py            #   Document metadata + content hash
+│   │   │   ├── chunk.py               #   Text chunks + vector(1536) embedding
+│   │   │   ├── conversation.py        #   Chat session with summary
+│   │   │   ├── message.py             #   Messages with JSONB sources
+│   │   │   ├── usage_log.py           #   Token count + latency tracking
+│   │   │   └── analytics.py           #   Daily aggregated metrics
+│   │   ├── schemas/                   # Pydantic request/response schemas
+│   │   ├── routers/                   # API endpoint handlers
+│   │   │   ├── auth.py                #   Login / register / verify
+│   │   │   ├── documents.py           #   Upload / list / delete / ingest
+│   │   │   ├── chat.py                #   SSE streaming chat
+│   │   │   ├── conversations.py       #   Conversation management
+│   │   │   └── analytics.py           #   Usage stats + top queries
+│   │   └── services/                  # Business logic layer
+│   │       ├── auth_service.py        #   User authentication
+│   │       ├── security_service.py    #   JWT + password hashing
+│   │       ├── embedding_service.py   #   Dual-mode embeddings (OpenAI / hash)
+│   │       ├── ingest_service.py      #   Document parsing + semantic chunking
+│   │       ├── search_service.py      #   Hybrid search (vector + keyword + RRF)
+│   │       └── chat_service.py        #   RAG pipeline + SSE streaming
+│   ├── alembic/                       # Database migrations
+│   ├── seed/                          # Demo data seeder
+│   │   └── data/                      #   Sample documents (Markdown)
+│   ├── requirements.txt
+│   └── render.yaml                    # Render.com deployment config
+│
+├── frontend/
+│   ├── src/
+│   │   ├── app/                       # Next.js 15 App Router
+│   │   │   ├── (auth)/                #   Auth pages (login, register)
+│   │   │   ├── dashboard/             #   Protected routes
+│   │   │   │   ├── chat/              #     Chat interface + conversation detail
+│   │   │   │   ├── documents/         #     Document management
+│   │   │   │   ├── analytics/         #     Usage dashboard
+│   │   │   │   └── settings/          #     Workspace settings
+│   │   │   └── api/auth/              #   NextAuth API route
+│   │   ├── components/
+│   │   │   ├── chat/                  #   Chat UI (message bubbles, citations, input)
+│   │   │   ├── documents/             #   Document list + upload
+│   │   │   ├── analytics/             #   Charts (tokens, latency, queries)
+│   │   │   ├── dashboard/             #   Layout (sidebar, header, stat cards)
+│   │   │   └── ui/                    #   shadcn/ui primitives
+│   │   ├── lib/
+│   │   │   ├── api-client.ts          #   Fetch wrapper with auth headers
+│   │   │   └── auth.config.ts         #   NextAuth configuration
+│   │   └── types/                     #   TypeScript type definitions
+│   ├── middleware.ts                  # NextAuth route protection
+│   ├── next.config.ts
+│   ├── tailwind.config.ts
+│   └── package.json
+│
+├── README.md
+└── .gitignore
+```
+
+---
+
+## Language Breakdown
 
 - **Python** — 51.1%
 - **TypeScript** — 47.7%
-- **その他**（CSS, SQL）— 1.2%
+- **Other** (CSS, SQL) — 1.2%
 
 ---
 
-## ライセンス
+## License
 
-本プロジェクトはポートフォリオデモンストレーション目的で構築されています。
+MIT
 
-## 作者
+## Author
 
-[@mer-prog](https://github.com/mer-prog)
+**[@mer-prog](https://github.com/mer-prog)**
