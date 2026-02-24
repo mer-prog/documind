@@ -38,8 +38,11 @@ SEED_DOCUMENTS = [
     "api-documentation.md",
 ]
 
-ADMIN_EMAIL = "admin@documind.dev"
-ADMIN_PASSWORD = "password123"
+import os
+import secrets
+
+ADMIN_EMAIL = os.environ.get("SEED_ADMIN_EMAIL", "admin@documind.dev")
+ADMIN_PASSWORD = os.environ.get("SEED_ADMIN_PASSWORD", secrets.token_urlsafe(16))
 ADMIN_NAME = "Admin User"
 WORKSPACE_NAME = "Acme Corp Knowledge Base"
 
@@ -65,7 +68,6 @@ async def main():
 
     mode = "OpenAI API" if use_openai else "mock embeddings"
     print(f"Starting DocuMind seed ({mode})...")
-    print(f"Database: {settings.DATABASE_URL[:50]}...")
 
     engine = create_async_engine(settings.DATABASE_URL, echo=False)
     session_factory = async_sessionmaker(
@@ -287,7 +289,8 @@ async def main():
     print(f"  Total chunks: {total_chunks}")
     print(f"  Total tokens: {total_tokens}")
     print(f"  Conversations: 2")
-    print(f"  Admin login: {ADMIN_EMAIL} / {ADMIN_PASSWORD}")
+    print(f"  Admin email: {ADMIN_EMAIL}")
+    print("  Admin password: [set via SEED_ADMIN_PASSWORD env var]")
 
 
 if __name__ == "__main__":
