@@ -8,6 +8,8 @@ Upload documents. Ask questions. Get cited answers instantly.
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-documind--pi.vercel.app-000?style=for-the-badge&logo=vercel)](https://documind-pi.vercel.app)
 
+[![CI](https://github.com/mer-prog/documind/actions/workflows/ci.yml/badge.svg)](https://github.com/mer-prog/documind/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-15-000?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=000)](https://react.dev/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=fff)](https://fastapi.tiangolo.com/)
@@ -217,6 +219,29 @@ cp .env.local.example .env.local
 npm run dev
 # App available at http://localhost:3000
 ```
+
+---
+
+## Testing
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+pytest
+```
+
+**77 tests** covering core business logic across 6 test modules:
+
+| Module | What's Tested |
+|---|---|
+| `test_search_service` | RRF fusion algorithm — score formula, deduplication, ranking, k-parameter sensitivity |
+| `test_embedding_service` | Mock embedding generation — determinism, L2 normalization, dimensionality, case insensitivity |
+| `test_ingest_service` | Markdown parsing — heading detection, paragraph splitting, content integrity; Chunking — overlap, indices, splitting |
+| `test_security_service` | Prompt injection detection (16 attack patterns); Input sanitization — length, whitespace, null bytes |
+| `test_chat_service` | Demo-mode response builder — source citations, page numbers, 3-source limit, fallback |
+| `test_auth_service` | bcrypt hashing — format, verification, salt randomness, Unicode support |
+
+CI runs automatically on push/PR via GitHub Actions (`.github/workflows/ci.yml`).
 
 ---
 
