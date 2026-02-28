@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,13 +19,15 @@ import {
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [errorKey, setErrorKey] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setErrorKey("");
     setLoading(true);
 
     try {
@@ -35,41 +38,43 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setErrorKey("invalidCredentials");
       } else {
         router.push("/dashboard");
         router.refresh();
       }
     } catch {
-      setError("An error occurred. Please try again.");
+      setErrorKey("_common_error");
     } finally {
       setLoading(false);
     }
   }
 
+  const errorMessage = errorKey === "_common_error" ? tc("error") : errorKey ? t(errorKey) : "";
+
   return (
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">
-          <span className="text-primary">DocuMind</span>
+          <span className="text-primary">{tc("appName")}</span>
         </CardTitle>
-        <CardDescription>Sign in to your account</CardDescription>
+        <CardDescription>{t("signInTitle")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("email")}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder={t("emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("password")}</Label>
             <Input
               id="password"
               type="password"
@@ -78,16 +83,16 @@ export function LoginForm() {
               required
             />
           </div>
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
+          {errorMessage && (
+            <p className="text-sm text-red-600">{errorMessage}</p>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? t("signingIn") : t("signIn")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
+            {t("noAccount")}{" "}
             <Link href="/register" className="text-primary hover:underline">
-              Register
+              {t("register")}
             </Link>
           </p>
         </form>
