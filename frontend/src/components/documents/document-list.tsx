@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useDocuments, useDeleteDocument, useIngestDocument } from "@/hooks/use-documents";
 import { DocumentCard } from "./document-card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,6 +9,7 @@ export function DocumentList() {
   const { data, isLoading } = useDocuments();
   const deleteMutation = useDeleteDocument();
   const ingestMutation = useIngestDocument();
+  const t = useTranslations("documents");
 
   if (isLoading) {
     return (
@@ -23,7 +25,7 @@ export function DocumentList() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">
-          No documents uploaded yet. Upload your first document to get started.
+          {t("noDocuments")}
         </p>
       </div>
     );

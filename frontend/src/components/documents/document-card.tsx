@@ -1,6 +1,7 @@
 "use client";
 
 import { FileText, FileType, File, Trash2, Play } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +29,7 @@ const statusVariants: Record<string, "warning" | "info" | "success" | "destructi
 
 export function DocumentCard({ document, onDelete, onIngest }: DocumentCardProps) {
   const Icon = fileIcons[document.file_type] || FileText;
+  const t = useTranslations("documents");
 
   return (
     <Card>
@@ -40,7 +42,7 @@ export function DocumentCard({ document, onDelete, onIngest }: DocumentCardProps
             <p className="text-sm font-medium truncate">{document.filename}</p>
             <div className="flex items-center gap-2 mt-1">
               <Badge variant={statusVariants[document.status] || "secondary"}>
-                {document.status}
+                {t(`status.${document.status}`)}
               </Badge>
               <span className="text-xs text-muted-foreground">
                 {formatFileSize(document.file_size)}
@@ -48,7 +50,7 @@ export function DocumentCard({ document, onDelete, onIngest }: DocumentCardProps
             </div>
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
               {document.chunk_count > 0 && (
-                <span>{document.chunk_count} chunks</span>
+                <span>{t("chunks", { count: document.chunk_count })}</span>
               )}
               <span>{formatRelativeTime(document.created_at)}</span>
             </div>
@@ -59,7 +61,7 @@ export function DocumentCard({ document, onDelete, onIngest }: DocumentCardProps
                 variant="ghost"
                 size="icon"
                 onClick={() => onIngest(document.id)}
-                title="Process document"
+                title={t("processDocument")}
               >
                 <Play className="h-4 w-4 text-primary" />
               </Button>
@@ -68,7 +70,7 @@ export function DocumentCard({ document, onDelete, onIngest }: DocumentCardProps
               variant="ghost"
               size="icon"
               onClick={() => onDelete(document.id)}
-              title="Delete document"
+              title={t("deleteDocument")}
             >
               <Trash2 className="h-4 w-4 text-red-500" />
             </Button>
