@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useConversation } from "@/hooks/use-conversations";
 import { useChat } from "@/hooks/use-chat";
 import { MessageBubble } from "./message-bubble";
@@ -29,6 +30,7 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<ModeResponse | null>(null);
+  const t = useTranslations("chat");
 
   // Fetch mode on mount
   useEffect(() => {
@@ -83,8 +85,8 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
         <div className="text-center py-1">
           <span className="text-xs text-slate-400">
             {mode.mode === "demo"
-              ? "\uD83D\uDD27 Demo Mode"
-              : `\u26A1 Live Mode \u2014 Powered by ${mode.model}`}
+              ? `\uD83D\uDD27 ${t("demoMode")}`
+              : `\u26A1 ${t("liveMode")} \u2014 ${t("poweredBy", { model: mode.model ?? "" })}`}
           </span>
         </div>
       )}
