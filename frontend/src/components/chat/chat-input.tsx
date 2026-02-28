@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Send, Square } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
 interface ChatInputProps {
@@ -19,6 +20,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const t = useTranslations("chat");
 
   const handleSend = useCallback(() => {
     const message = input.trim();
@@ -53,7 +55,7 @@ export function ChatInput({
           value={input}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder="Ask a question about your documents..."
+          placeholder={t("placeholder")}
           className="flex-1 resize-none rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           rows={1}
           disabled={isStreaming || disabled}
@@ -63,7 +65,7 @@ export function ChatInput({
             variant="destructive"
             size="icon"
             onClick={onCancel}
-            title="Stop generating"
+            title={t("stopGenerating")}
           >
             <Square className="h-4 w-4" />
           </Button>
@@ -72,7 +74,7 @@ export function ChatInput({
             size="icon"
             onClick={handleSend}
             disabled={!input.trim() || disabled}
-            title="Send message"
+            title={t("sendMessage")}
           >
             <Send className="h-4 w-4" />
           </Button>

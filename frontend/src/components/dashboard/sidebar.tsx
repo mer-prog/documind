@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { clearTokenCache } from "@/lib/api-client";
 import {
   BarChart3,
@@ -17,23 +18,25 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/dashboard/documents", label: "Documents", icon: FileText },
-  { href: "/dashboard/chat", label: "Chat", icon: MessageSquare },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", labelKey: "dashboard" as const, icon: Home },
+  { href: "/dashboard/documents", labelKey: "documents" as const, icon: FileText },
+  { href: "/dashboard/chat", labelKey: "chat" as const, icon: MessageSquare },
+  { href: "/dashboard/analytics", labelKey: "analytics" as const, icon: BarChart3 },
+  { href: "/dashboard/settings", labelKey: "settings" as const, icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const t = useTranslations("common");
+  const tNav = useTranslations("nav");
 
   return (
     <div className="flex flex-col h-full w-[280px] border-r border-slate-200 bg-white">
       <div className="p-6">
-        <h1 className="text-xl font-bold text-primary">DocuMind</h1>
+        <h1 className="text-xl font-bold text-primary">{t("appName")}</h1>
         <p className="text-xs text-muted-foreground mt-1">
-          AI Document Intelligence
+          {t("appTagline")}
         </p>
       </div>
 
@@ -57,7 +60,7 @@ export function Sidebar() {
               )}
             >
               <item.icon className="h-4 w-4" />
-              {item.label}
+              {tNav(item.labelKey)}
             </Link>
           );
         })}
@@ -72,7 +75,7 @@ export function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
-              {session?.user?.name || "User"}
+              {session?.user?.name || t("user")}
             </p>
             <p className="text-xs text-muted-foreground truncate">
               {session?.user?.email || ""}
@@ -89,7 +92,7 @@ export function Sidebar() {
           }}
         >
           <LogOut className="h-4 w-4 mr-2" />
-          Sign Out
+          {t("signOut")}
         </Button>
       </div>
     </div>

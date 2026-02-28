@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { SourceCitation } from "./source-citation";
 import type { Message } from "@/types/conversation";
@@ -9,6 +12,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
   const isUser = message.role === "user";
+  const t = useTranslations("chat");
 
   return (
     <div
@@ -34,7 +38,7 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
         {!isUser && message.sources && message.sources.length > 0 && (
           <div className="mt-3 space-y-1">
             <p className="text-xs font-medium text-muted-foreground mb-1">
-              Sources
+              {t("sources")}
             </p>
             {message.sources.map((source, i) => (
               <SourceCitation key={i} source={source} />

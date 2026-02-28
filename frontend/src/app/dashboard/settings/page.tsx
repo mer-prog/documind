@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,60 +8,62 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
+  const t = useTranslations("settings");
+
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-2xl font-bold">{t("title")}</h1>
 
       <Tabs defaultValue="general">
         <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+          <TabsTrigger value="general">{t("general")}</TabsTrigger>
+          <TabsTrigger value="members">{t("members")}</TabsTrigger>
+          <TabsTrigger value="api-keys">{t("apiKeys")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="mt-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Workspace</CardTitle>
+              <CardTitle>{t("workspace")}</CardTitle>
               <CardDescription>
-                Manage your workspace settings
+                {t("workspaceDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="workspace-name">Workspace Name</Label>
+                <Label htmlFor="workspace-name">{t("workspaceName")}</Label>
                 <Input
                   id="workspace-name"
-                  placeholder="My Workspace"
+                  placeholder={t("workspacePlaceholder")}
                   disabled
                 />
               </div>
-              <Button disabled>Save Changes</Button>
+              <Button disabled>{t("saveChanges")}</Button>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Profile</CardTitle>
+              <CardTitle>{t("profile")}</CardTitle>
               <CardDescription>
-                Update your personal information
+                {t("profileDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" placeholder="Your name" disabled />
+                <Label htmlFor="name">{t("profileName")}</Label>
+                <Input id="name" placeholder={t("profileNamePlaceholder")} disabled />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("profileEmail")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t("profileEmailPlaceholder")}
                   disabled
                 />
               </div>
-              <Button disabled>Update Profile</Button>
+              <Button disabled>{t("updateProfile")}</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -68,14 +71,14 @@ export default function SettingsPage() {
         <TabsContent value="members" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Team Members</CardTitle>
+              <CardTitle>{t("teamMembers")}</CardTitle>
               <CardDescription>
-                Manage who has access to your workspace
+                {t("teamDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Team management coming soon.
+                {t("teamComingSoon")}
               </p>
             </CardContent>
           </Card>
@@ -84,14 +87,14 @@ export default function SettingsPage() {
         <TabsContent value="api-keys" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>API Keys</CardTitle>
+              <CardTitle>{t("apiKeysTitle")}</CardTitle>
               <CardDescription>
-                Manage API keys for programmatic access
+                {t("apiKeysDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                API key management coming soon.
+                {t("apiKeysComingSoon")}
               </p>
             </CardContent>
           </Card>

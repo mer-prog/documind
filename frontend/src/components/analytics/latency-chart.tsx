@@ -9,7 +9,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatLocalDate } from "@/lib/utils";
 import type { UsageDataPoint } from "@/types/analytics";
 
 interface LatencyChartProps {
@@ -17,18 +19,18 @@ interface LatencyChartProps {
 }
 
 export function LatencyChart({ data }: LatencyChartProps) {
+  const t = useTranslations("analytics");
+  const locale = useLocale();
+
   const chartData = data.map((d) => ({
-    date: new Date(d.date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }),
+    date: formatLocalDate(d.date, locale),
     latency: Math.round(d.avg_latency_ms),
   }));
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Average Latency (ms)</CardTitle>
+        <CardTitle className="text-base">{t("averageLatency")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
@@ -43,7 +45,7 @@ export function LatencyChart({ data }: LatencyChartProps) {
               <YAxis
                 tick={{ fontSize: 12 }}
                 stroke="#94a3b8"
-                unit="ms"
+                unit={t("ms")}
               />
               <Tooltip
                 contentStyle={{
@@ -52,12 +54,12 @@ export function LatencyChart({ data }: LatencyChartProps) {
                   borderRadius: "8px",
                   fontSize: "12px",
                 }}
-                formatter={(value: number) => [`${value}ms`, "Latency"]}
+                formatter={(value: number) => [`${value}${t("ms")}`, t("latency")]}
               />
               <Line
                 type="monotone"
                 dataKey="latency"
-                name="Latency"
+                name={t("latency")}
                 stroke="#4F46E5"
                 strokeWidth={2}
                 dot={{ fill: "#4F46E5", r: 3 }}

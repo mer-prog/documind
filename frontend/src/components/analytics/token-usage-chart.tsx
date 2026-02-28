@@ -10,7 +10,9 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatLocalDate } from "@/lib/utils";
 import type { UsageDataPoint } from "@/types/analytics";
 
 interface TokenUsageChartProps {
@@ -18,11 +20,11 @@ interface TokenUsageChartProps {
 }
 
 export function TokenUsageChart({ data }: TokenUsageChartProps) {
+  const t = useTranslations("analytics");
+  const locale = useLocale();
+
   const chartData = data.map((d) => ({
-    date: new Date(d.date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }),
+    date: formatLocalDate(d.date, locale),
     prompt: d.tokens_prompt,
     completion: d.tokens_completion,
   }));
@@ -30,7 +32,7 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Token Usage</CardTitle>
+        <CardTitle className="text-base">{t("tokenUsage")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
@@ -55,7 +57,7 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
               <Area
                 type="monotone"
                 dataKey="prompt"
-                name="Prompt Tokens"
+                name={t("promptTokens")}
                 stackId="1"
                 stroke="#4F46E5"
                 fill="#4F46E5"
@@ -64,7 +66,7 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
               <Area
                 type="monotone"
                 dataKey="completion"
-                name="Completion Tokens"
+                name={t("completionTokens")}
                 stackId="1"
                 stroke="#10B981"
                 fill="#10B981"

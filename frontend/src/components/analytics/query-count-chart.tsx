@@ -9,7 +9,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatLocalDate } from "@/lib/utils";
 import type { UsageDataPoint } from "@/types/analytics";
 
 interface QueryCountChartProps {
@@ -17,18 +19,18 @@ interface QueryCountChartProps {
 }
 
 export function QueryCountChart({ data }: QueryCountChartProps) {
+  const t = useTranslations("analytics");
+  const locale = useLocale();
+
   const chartData = data.map((d) => ({
-    date: new Date(d.date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }),
+    date: formatLocalDate(d.date, locale),
     queries: d.queries,
   }));
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Daily Queries</CardTitle>
+        <CardTitle className="text-base">{t("dailyQueries")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
@@ -51,7 +53,7 @@ export function QueryCountChart({ data }: QueryCountChartProps) {
               />
               <Bar
                 dataKey="queries"
-                name="Queries"
+                name={t("queries")}
                 fill="#4F46E5"
                 radius={[4, 4, 0, 0]}
               />

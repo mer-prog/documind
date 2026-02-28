@@ -38,6 +38,7 @@ Most portfolio RAG apps rely on a single retrieval method and wrap an OpenAI cal
 | **Async Concurrent Search** | Vector and keyword searches execute in parallel via `asyncio.gather()` | Demonstrates real performance engineering, not just "it works" |
 | **Multi-Tenant Isolation** | Workspace-scoped data with RBAC (admin/member) across all tables | Shows enterprise architecture patterns, not toy single-user apps |
 | **SSE Streaming** | Token-by-token Server-Sent Events for ChatGPT-like UX | Real-time streaming protocol, not polling or batch responses |
+| **Multilingual (i18n)** | next-intl による日英切替、cookie ベースロケール、日付・数値のロケール対応フォーマット | SaaS で求められる多言語対応スキルを実装レベルで証明 |
 
 ---
 
@@ -125,6 +126,15 @@ Complete data isolation by workspace with role-based access control (admin/membe
 
 > Demo mode is not a mock — the hybrid search engine performs real cosine similarity and trigram matching against pre-computed embeddings.
 
+### Multilingual Support (Japanese / English)
+
+Full i18n coverage across all UI surfaces, powered by **next-intl** with cookie-based locale management.
+
+- **Switching method:** Cookie-based locale (no URL path changes) — existing URL structure is preserved
+- **Coverage:** All UI text (buttons, labels, placeholders, error messages, navigation, settings), date formats (`2026/02/28` vs `Feb 28, 2026`), and number/currency formats (`¥1,234` vs `$1,234`)
+- **Implementation:** `next-intl` with `NextIntlClientProvider`, `getRequestConfig` for server-side locale resolution, `localStorage` persistence for returning users
+- **UX:** Language toggle in header with flag icons and fade transition (150ms), no page reload on switch
+
 ---
 
 ## Tech Stack
@@ -158,6 +168,7 @@ Complete data isolation by workspace with role-based access control (admin/membe
 | **Tailwind CSS** | Utility-first styling |
 | **shadcn/ui + Radix UI** | Accessible component library |
 | **Recharts** | Analytics data visualization |
+| **next-intl** | Internationalization (i18n) — Japanese/English |
 | **Zod** | Runtime schema validation |
 
 ### Infrastructure
@@ -298,6 +309,7 @@ Key design choices:
 | **500-token chunks with 50-token overlap** | Balanced granularity for retrieval precision without fragmenting context |
 | **asyncio.gather for search** | Concurrent vector + keyword search eliminates sequential bottleneck |
 | **Workspace-scoped queries** | Multi-tenant isolation at the query level, not just the application level |
+| **Cookie-based i18n (not path-based)** | Preserves existing URL structure. SEO benefits of path-based locales are negligible for authenticated SaaS apps |
 
 ---
 
@@ -356,6 +368,12 @@ documind/
 │   │   │   ├── analytics/             #   Charts (tokens, latency, queries)
 │   │   │   ├── dashboard/             #   Layout (sidebar, header, stat cards)
 │   │   │   └── ui/                    #   shadcn/ui primitives
+│   │   ├── i18n/                       #   Internationalization config
+│   │   │   ├── config.ts              #     Locale definitions (ja, en)
+│   │   │   └── request.ts             #     Server-side locale resolution
+│   │   ├── messages/                  #   Translation files
+│   │   │   ├── ja.json                #     Japanese translations
+│   │   │   └── en.json                #     English translations
 │   │   ├── lib/
 │   │   │   ├── api-client.ts          #   Fetch wrapper with auth headers
 │   │   │   └── auth.config.ts         #   NextAuth configuration

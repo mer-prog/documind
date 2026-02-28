@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,21 +23,25 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+  const [errorKey, setErrorKey] = useState("");
+  const [errorDetail, setErrorDetail] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setErrorKey("");
+    setErrorDetail("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setErrorKey("passwordsNoMatch");
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+      setErrorKey("passwordTooShort");
       return;
     }
 
@@ -51,7 +56,8 @@ export function RegisterForm() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.detail || "Registration failed");
+        setErrorDetail(data.detail || "");
+        if (!data.detail) setErrorKey("registrationFailed");
         return;
       }
 
@@ -63,52 +69,54 @@ export function RegisterForm() {
       });
 
       if (result?.error) {
-        setError("Registration successful but sign-in failed. Please log in.");
+        setErrorKey("registrationSignInFailed");
       } else {
         router.push("/dashboard");
         router.refresh();
       }
     } catch {
-      setError("An error occurred. Please try again.");
+      setErrorKey("_common_error");
     } finally {
       setLoading(false);
     }
   }
 
+  const errorMessage = errorDetail || (errorKey === "_common_error" ? tc("error") : errorKey ? t(errorKey) : "");
+
   return (
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">
-          <span className="text-primary">DocuMind</span>
+          <span className="text-primary">{tc("appName")}</span>
         </CardTitle>
-        <CardDescription>Create your account</CardDescription>
+        <CardDescription>{t("createAccountTitle")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">{t("name")}</Label>
             <Input
               id="name"
               type="text"
-              placeholder="John Doe"
+              placeholder={t("namePlaceholder")}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("email")}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder={t("emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("password")}</Label>
             <Input
               id="password"
               type="password"
@@ -118,7 +126,7 @@ export function RegisterForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
             <Input
               id="confirmPassword"
               type="password"
@@ -127,16 +135,16 @@ export function RegisterForm() {
               required
             />
           </div>
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
+          {errorMessage && (
+            <p className="text-sm text-red-600">{errorMessage}</p>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Create Account"}
+            {loading ? t("creatingAccount") : t("createAccount")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
+            {t("hasAccount")}{" "}
             <Link href="/login" className="text-primary hover:underline">
-              Sign In
+              {t("signIn")}
             </Link>
           </p>
         </form>

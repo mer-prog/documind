@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useUploadDocument, useIngestDocument } from "@/hooks/use-documents";
 
@@ -11,6 +12,7 @@ export function UploadDialog() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadDocument();
   const ingestMutation = useIngestDocument();
+  const t = useTranslations("documents");
 
   async function handleUpload() {
     if (!selectedFile) return;
@@ -49,11 +51,11 @@ export function UploadDialog() {
         disabled={uploading}
       >
         <Upload className="h-4 w-4 mr-2" />
-        {selectedFile ? selectedFile.name : "Choose File"}
+        {selectedFile ? selectedFile.name : t("chooseFile")}
       </Button>
       {selectedFile && (
         <Button onClick={handleUpload} disabled={uploading}>
-          {uploading ? "Processing..." : "Upload & Process"}
+          {uploading ? t("processing") : t("uploadProcess")}
         </Button>
       )}
     </div>

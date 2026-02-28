@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TopQuery } from "@/types/analytics";
 
@@ -9,17 +10,18 @@ interface TopQueriesListProps {
 
 export function TopQueriesList({ data }: TopQueriesListProps) {
   const maxCount = data.length > 0 ? data[0].count : 1;
+  const t = useTranslations("analytics");
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Top Queries</CardTitle>
+        <CardTitle className="text-base">{t("topQueries")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           {data.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              No queries yet
+              {t("noQueries")}
             </p>
           ) : (
             data.map((query, index) => (

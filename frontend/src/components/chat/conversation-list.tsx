@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Plus, MessageSquare } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useConversations } from "@/hooks/use-conversations";
@@ -13,6 +14,8 @@ interface ConversationListProps {
 
 export function ConversationList({ activeId }: ConversationListProps) {
   const { data: conversations, isLoading } = useConversations();
+  const t = useTranslations("chat");
+  const tc = useTranslations("common");
 
   return (
     <div className="flex flex-col h-full">
@@ -20,7 +23,7 @@ export function ConversationList({ activeId }: ConversationListProps) {
         <Link href="/dashboard/chat">
           <Button variant="outline" size="sm" className="w-full">
             <Plus className="h-4 w-4 mr-2" />
-            New Chat
+            {t("newChat")}
           </Button>
         </Link>
       </div>
@@ -29,11 +32,11 @@ export function ConversationList({ activeId }: ConversationListProps) {
         <div className="p-2 space-y-1">
           {isLoading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              Loading...
+              {tc("loading")}
             </div>
           ) : !conversations?.length ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              No conversations yet
+              {t("noConversations")}
             </div>
           ) : (
             conversations.map((conv) => (
@@ -51,7 +54,7 @@ export function ConversationList({ activeId }: ConversationListProps) {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{conv.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {conv.message_count} messages &middot;{" "}
+                    {t("messages", { count: conv.message_count })} &middot;{" "}
                     {formatRelativeTime(conv.updated_at)}
                   </p>
                 </div>

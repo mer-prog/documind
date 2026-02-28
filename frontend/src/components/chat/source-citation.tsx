@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { SourceCitation as SourceCitationType } from "@/types/chat";
 
 interface SourceCitationProps {
@@ -10,6 +11,7 @@ interface SourceCitationProps {
 
 export function SourceCitation({ source }: SourceCitationProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const t = useTranslations("chat");
 
   return (
     <div className="border-l-2 border-primary-300 bg-slate-50 rounded-r-lg overflow-hidden">
@@ -28,7 +30,7 @@ export function SourceCitation({ source }: SourceCitationProps) {
         </span>
         {source.page_number && (
           <span className="text-xs text-muted-foreground">
-            Page {source.page_number}
+            {t("page", { number: source.page_number })}
           </span>
         )}
       </button>

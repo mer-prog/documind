@@ -1,4 +1,10 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 export function ThinkingIndicator() {
+  const t = useTranslations("chat");
+
   return (
     <div className="flex items-center gap-2 text-slate-500 py-3 px-4">
       <div className="flex gap-1">
@@ -15,7 +21,7 @@ export function ThinkingIndicator() {
           style={{ animationDelay: "300ms" }}
         />
       </div>
-      <span className="text-sm">Thinking...</span>
+      <span className="text-sm">{t("thinking")}</span>
     </div>
   );
 }
