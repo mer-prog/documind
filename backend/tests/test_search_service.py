@@ -1,10 +1,13 @@
-"""Tests for the hybrid search engine (RRF fusion logic)."""
+"""Tests for the hybrid search engine (RRF fusion logic + concurrency safety)."""
 
+import asyncio
 import uuid
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.search_service import _rrf_fuse
+from app.services import search_service
+from app.services.search_service import SearchResult, _rrf_fuse
 
 
 def _make_result(rid: str | None = None, **kwargs) -> dict:
@@ -102,3 +105,45 @@ class TestRRFFuse:
         fused = _rrf_fuse(vec, kw, k=60)
         expected = 1.0 / 61 + 1.0 / 61  # rank 0 in both
         assert abs(fused[0]["rrf_score"] - expected) < 1e-9
+
+
+class TestHybridSearchConcurrency:
+    """A single AsyncSession does not support concurrent operations, so
+    hybrid_search must give each concurrent query its own session."""
+
+    async def test_each_search_gets_its_own_session(self, monkeypatch) -> None:
+        sessions: list = []
+        keyword_started = asyncio.Event()
+
+        async def fake_embedding(text: str) -> list[float]:
+            return [0.0] * 4
+
+        async def fake_vector(db, embedding, workspace_id, limit=20):
+            sessions.append(db)
+            # Block until the keyword search has started: proves the two
+            # searches actually overlap (sequential execution would hit
+            # the timeout below and fail instead of hanging).
+            await asyncio.wait_for(keyword_started.wait(), timeout=5)
+            return [_make_result()]
+
+        async def fake_keyword(db, query, workspace_id, limit=20):
+            sessions.append(db)
+            keyword_started.set()
+            return [_make_result()]
+
+        monkeypatch.setattr(
+            search_service.embedding_service, "get_embedding", fake_embedding
+        )
+        monkeypatch.setattr(search_service, "_vector_search", fake_vector)
+        monkeypatch.setattr(search_service, "_keyword_search", fake_keyword)
+
+        results = await asyncio.wait_for(
+            search_service.hybrid_search("remote work policy", uuid.uuid4()),
+            timeout=5,
+        )
+
+        assert len(sessions) == 2
+        assert sessions[0] is not sessions[1]
+        assert all(isinstance(s, AsyncSession) for s in sessions)
+        assert len(results) == 2
+        assert all(isinstance(r, SearchResult) for r in results)

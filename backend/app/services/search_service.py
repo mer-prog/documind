@@ -6,6 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.database import async_session
 from app.services import embedding_service
 
 
@@ -128,7 +129,6 @@ def _rrf_fuse(
 
 
 async def hybrid_search(
-    db: AsyncSession,
     query: str,
     workspace_id: uuid.UUID,
     top_k: int = 10,
@@ -136,10 +136,19 @@ async def hybrid_search(
     # Generate query embedding
     query_embedding = await embedding_service.get_embedding(query)
 
-    # Run both searches concurrently
+    # Run both searches concurrently. SQLAlchemy's AsyncSession does not
+    # support concurrent operations on a single session, so each search
+    # runs on its own session from the factory.
+    async def _run_vector() -> list[dict]:
+        async with async_session() as session:
+            return await _vector_search(session, query_embedding, workspace_id)
+
+    async def _run_keyword() -> list[dict]:
+        async with async_session() as session:
+            return await _keyword_search(session, query, workspace_id)
+
     vector_results, keyword_results = await asyncio.gather(
-        _vector_search(db, query_embedding, workspace_id),
-        _keyword_search(db, query, workspace_id),
+        _run_vector(), _run_keyword()
     )
 
     # Fuse with RRF

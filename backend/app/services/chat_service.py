@@ -165,10 +165,14 @@ async def stream_chat_response(
 
     sanitized_message = security_service.sanitize_input(message)
 
-    # Create or retrieve conversation
+    # Create or retrieve conversation (scoped to the requesting user,
+    # same authorization rule as the conversations router)
     if conversation_id:
         result = await db.execute(
-            select(Conversation).where(Conversation.id == conversation_id)
+            select(Conversation).where(
+                Conversation.id == conversation_id,
+                Conversation.user_id == user_id,
+            )
         )
         conversation = result.scalar_one_or_none()
         if conversation is None:
@@ -203,7 +207,7 @@ async def stream_chat_response(
 
     # Search for relevant chunks
     search_results = await search_service.hybrid_search(
-        db, sanitized_message, workspace_id
+        sanitized_message, workspace_id
     )
 
     # Send sources

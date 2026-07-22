@@ -1,10 +1,12 @@
-"""Tests for the chat service (mock response builder)."""
+"""Tests for the chat service (mock response builder + conversation scoping)."""
 
+import json
 import uuid
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.services.chat_service import _build_mock_response
+from app.services.chat_service import _build_mock_response, stream_chat_response
 from app.services.search_service import SearchResult
 
 
@@ -57,3 +59,59 @@ class TestBuildMockResponse:
         results = [_make_search_result(text_snippet="Employees get 20 PTO days.")]
         response = _build_mock_response(results, "query")
         assert "20 PTO days" in response
+
+
+class TestStreamChatConversationScope:
+    """Conversation lookup must be scoped to the requesting user (IDOR guard)."""
+
+    def _make_db(self, captured_statements: list) -> MagicMock:
+        """A mock session whose conversation lookup finds nothing."""
+
+        async def fake_execute(statement, *args, **kwargs):
+            captured_statements.append(statement)
+            result = MagicMock()
+            result.scalar_one_or_none.return_value = None
+            return result
+
+        db = MagicMock()
+        db.execute = AsyncMock(side_effect=fake_execute)
+        return db
+
+    async def test_foreign_conversation_id_is_rejected(self) -> None:
+        """A conversation_id not owned by the user yields an error event only."""
+        captured: list = []
+        db = self._make_db(captured)
+
+        events = []
+        async for event in stream_chat_response(
+            db=db,
+            user_id=uuid.uuid4(),
+            workspace_id=uuid.uuid4(),
+            message="What is the vacation policy?",
+            conversation_id=uuid.uuid4(),
+        ):
+            events.append(event)
+
+        assert len(events) == 1
+        payload = json.loads(events[0].removeprefix("data: ").strip())
+        assert payload["type"] == "error"
+        db.add.assert_not_called()  # nothing persisted
+
+    async def test_conversation_lookup_filters_by_user_id(self) -> None:
+        """The SELECT must filter on both conversation id and user_id."""
+        captured: list = []
+        db = self._make_db(captured)
+
+        async for _ in stream_chat_response(
+            db=db,
+            user_id=uuid.uuid4(),
+            workspace_id=uuid.uuid4(),
+            message="What is the vacation policy?",
+            conversation_id=uuid.uuid4(),
+        ):
+            pass
+
+        assert len(captured) == 1
+        compiled = str(captured[0])
+        assert "conversations.id" in compiled
+        assert "conversations.user_id" in compiled
